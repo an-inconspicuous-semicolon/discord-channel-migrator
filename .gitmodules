@@ -1,0 +1,4 @@
+[submodule "deps/serenity"]
+	path = deps/serenity
+	url = https://github.com/serenity-rs/serenity/
+	branch = next
