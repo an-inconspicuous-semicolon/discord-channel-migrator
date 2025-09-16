@@ -1,10 +1,9 @@
-use crate::threads::ThreadReader;
-use clap::Parser;
-use futures::StreamExt;
-use serenity::all::{ChannelId, GuildThread, Http, Token};
+mod channel;
+mod transferrer;
 
-mod messages;
-mod threads;
+use crate::channel::{DestinationType, get_destination_type, get_source_type};
+use clap::Parser;
+use serenity::all::{ChannelId, GenericId, Http, Token};
 
 #[derive(clap::Parser)]
 struct Args {
@@ -13,70 +12,39 @@ struct Args {
         help = "The token for the discord bot that will perform the transfer."
     )]
     token: Token,
-    #[clap(long, help = "The channels that contain the threads to transfer.")]
+    #[clap(long, help = "The channel that will be transferred.")]
     source: ChannelId,
-    #[clap(long, help = "The channel that the threads will be transferred to.")]
-    destination: ChannelId,
+    #[clap(
+        long,
+        help = "The channel/guild that the channel will be transferred to."
+    )]
+    destination: GenericId,
 }
 
 #[tokio::main]
 async fn main() {
     println!("Hello, World!");
     let args = Args::parse();
+    let http = Http::new(args.token);
 
-    let http = Http::new(args.token.clone());
-    println!(
-        "Will move threads from {} to {}.",
-        args.source, args.destination
-    );
+    let source_type = get_source_type(&http, args.source)
+        .await
+        .unwrap_or_else(|error| terminate_on_serenity_error(error));
 
-    let threads = match enumerate_channel_threads(&http, args.source).await {
-        Ok(threads) => threads,
-        Err(error) => {
-            eprintln!("Failed to enumerate the threads from the source: {error}");
-            std::process::exit(1);
-        }
+    let destination_type = get_destination_type(&http, args.destination.get().into())
+        .await
+        .unwrap_or_else(|error| terminate_on_serenity_error(error));
+
+    let destination_type_name = match destination_type {
+        DestinationType::Guild => "guild",
+        DestinationType::Channel(channel_type) => channel_type.name(),
     };
 
-    let readers = threads
-        .into_iter()
-        .map(ThreadReader::new)
-        .collect::<Vec<_>>();
-
-    futures::stream::iter(readers.into_iter())
-        .then(async |reader| reader.forward_messages(&http, args.destination).await)
-        .collect::<Vec<_>>()
-        .await;
+    println!("source channel type: {}", source_type.name());
+    println!("destination channel type: {}", destination_type_name);
 }
 
-pub async fn enumerate_channel_threads(
-    http: &Http,
-    channel_id: ChannelId,
-) -> Result<Vec<GuildThread>, anyhow::Error> {
-    let mut threads = vec![];
-    let mut timestamp = None;
-
-    println!("Searching for threads in {}", channel_id);
-    loop {
-        let data = match http
-            .get_channel_archived_public_threads(channel_id, timestamp, None)
-            .await
-        {
-            Ok(data) => data,
-            Err(error) => return Err(error.into()),
-        };
-
-        if data.threads.is_empty() {
-            break;
-        }
-        println!("Received {} threads.", data.threads.len());
-
-        let oldest = data.threads.last().unwrap();
-        timestamp = Some(oldest.thread_metadata.archive_timestamp.unwrap());
-        threads.extend(data.threads);
-    }
-    println!("Successfully found {} threads.", threads.len());
-
-    threads.reverse();
-    Ok(threads)
+fn terminate_on_serenity_error(error: serenity::Error) -> ! {
+    eprintln!("Received an error whilst doing a critical operation: {error}");
+    std::process::exit(1);
 }
