@@ -1,41 +1,14 @@
-use serenity::all::{Channel, ChannelId, ChannelType, GenericId, Http, HttpError};
+use serenity::all::{Channel, ChannelType};
 
-pub enum DestinationType {
+#[derive(Copy, Clone)]
+pub enum IdentifierType {
+    User,
     Guild,
     Channel(ChannelType),
 }
 
-pub async fn get_source_type(
-    http: &Http,
-    channel_id: ChannelId,
-) -> Result<ChannelType, serenity::Error> {
-    http.get_channel(channel_id.into())
-        .await
-        .map(get_channel_inner_type)
-}
-
-pub async fn get_destination_type(
-    http: &Http,
-    id: GenericId,
-) -> Result<DestinationType, serenity::all::Error> {
-    if let Err(error) = http.get_guild(id.get().into()).await {
-        if matches!(&error, 
-            serenity::all::Error::Http(HttpError::UnsuccessfulRequest(e)) 
-            if (10000u32..20000).contains(&e.error.code.0))
-        // Unknown entity
-        {
-            // This id was not for a guild, try as a channel instead.
-            return get_source_type(http, id.get().into())
-                .await
-                .map(DestinationType::Channel);
-        }
-        return Err(error);
-    }
-    Ok(DestinationType::Guild)
-}
-
-fn get_channel_inner_type(channel: Channel) -> ChannelType {
-    match channel {
+pub(crate) fn get_channel_inner_type(channel: Channel) -> ChannelType {
+    let channel_type = match channel {
         Channel::Guild(channel) => channel.base.kind,
         Channel::GuildThread(thread) => thread.base.kind,
         Channel::Private(private) => private.kind,
@@ -46,5 +19,12 @@ fn get_channel_inner_type(channel: Channel) -> ChannelType {
         _ => {
             panic!("Encountered a channel type that should not exist!")
         }
+    };
+
+    // The channel can be "valid" yet unknown, so handle that as well.
+    if channel_type.name().eq_ignore_ascii_case("unknown") {
+        panic!("Encountered a channel type that should not exist!")
     }
+
+    channel_type
 }
