@@ -6,5 +6,5 @@ edition = "2024"
 [dependencies]
 clap = { version = "4.5.47", features = ["derive"] }
 tokio = { version = "1.47.1", default-features = false, features = ["rt", "rt-multi-thread", "macros"] }
-serenity.path = "./deps/serenity"
+serenity = { git = "https://github.com/serenity-rs/serenity", rev = "b6d81d90e2f68e02c00559baf3db3ea8b1ab66d4" }
 anyhow = "1.0.99"

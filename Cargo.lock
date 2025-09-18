@@ -201,9 +201,9 @@ checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
 
 [[package]]
 name = "bytestring"
-version = "1.4.0"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e465647ae23b2823b0753f50decb2d5a86d2bb2cac04788fafd1f80e45378e5f"
+checksum = "113b4343b5f6617e7ad401ced8de3cc8b012e73a594347c307b90db3e9271289"
 dependencies = [
  "bytes",
 ]
@@ -1425,6 +1425,7 @@ dependencies = [
 [[package]]
 name = "serenity"
 version = "0.12.4"
+source = "git+https://github.com/serenity-rs/serenity?rev=b6d81d90e2f68e02c00559baf3db3ea8b1ab66d4#b6d81d90e2f68e02c00559baf3db3ea8b1ab66d4"
 dependencies = [
  "aformat",
  "arrayvec",
@@ -1486,9 +1487,9 @@ checksum = "7a2ae44ef20feb57a68b23d846850f861394c2e02dc425a50098ae8c90267589"
 
 [[package]]
 name = "small-fixed-array"
-version = "0.4.9"
+version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73d227c85d2e6522e8039ff6c288aef9f65d20c39128c83a6014cd8bcabe2f3c"
+checksum = "8311fa212af82bdee69d5332af52dc8b09e77f5777258999a9339adfe2d345f9"
 dependencies = [
  "serde",
 ]
