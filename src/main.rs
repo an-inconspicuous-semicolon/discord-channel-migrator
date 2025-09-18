@@ -50,7 +50,7 @@ async fn main() {
 
     let destination_type_name = match destination_type {
         IdentifierType::User => terminate_on_error(anyhow!(
-            "The source ID appears to be a user. Transferring to or from user DM's are not currently supported!"
+            "The destination ID appears to be a user. Transferring to or from user DM's are not currently supported!"
         )),
         other => identification::get_id_name(other),
     };
